@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""
+Perform a muppet run.
+
+Collects muppet classes from /etc/muppet/classes and runs the corresponding muppet scripts.
+"""
+import os
+import re
+import sys
+import subprocess
+from pathlib import Path
+
+# the checkout of the muppet config; contains muppet scripts
+ROOT = Path(os.environ.setdefault("MUPPET_CONFIG", "/opt/muppetconfig"))
+MUPPET_DIR = Path(os.environ.setdefault("MUPPET_DIR", "/opt/muppet"))
+ETC_DIR = Path(os.environ.setdefault("MUPPET_ETC_DIR", "/etc/muppet/"))
+STATE_FILE = Path(os.environ.setdefault("MUPPET_STATEFILE", "/var/run/muppet.lock"))
+
+REQUIRE_PATTERN = re.compile(r"\s*require\s+(.*)")
+path_parts = os.environ.get("PATH", "").split(os.pathsep)
+if f"{MUPPET_DIR}/bin" not in path_parts:
+    path_parts.insert(0, f"{MUPPET_DIR}/bin")
+    os.environ["PATH"] = os.pathsep.join(path_parts)
+
+try:
+    STATE_FILE.mkdir()
+except FileExistsError:
+    print("Muppet run already in progress; aborting.", file=sys.stderr)
+    sys.exit(2)
+
+try:
+    done = set()
+    mclasses = (ETC_DIR / "classes").read_text().strip().split()
+    while mclasses:
+        mclass = mclasses.pop()
+        if mclass in done:
+            continue
+        with (ROOT / mclass).open() as f:
+            missing_dependencies = set()
+            for line in f:
+                m = REQUIRE_PATTERN.fullmatch(line)
+                if m:
+                    missing_dependencies.update(
+                        dep
+                        for dep in m.group(1).split()
+                        if dep not in done
+                    )
+            if missing_dependencies:
+                mclasses.append(mclass)
+                mclasses.extend(missing_dependencies)
+                continue
+        subprocess.check_call(["/bin/sh", ROOT / mclass])
+        done.add(mclass)
+except CalledProcessError as e:
+    print("Error when applying mclass", mclass, file=sys.stderr)
+    sys.exit(1)
+finally:
+    STATE_FILE.rmdir()
