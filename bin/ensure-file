@@ -6,6 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+changed = False
+
 def get_hash(path):
     output = subprocess.check_output(["shasum", str(path)]).decode()
     # The output of shasum starts with a backslash if the filename contains
@@ -32,7 +35,11 @@ source = Path(os.environ["MUPPET_ROOT"]) / source
 
 if not target.exists() or get_hash(target) != get_hash(source):
     shutil.copy(source, target)
+    changed = True
 
 if user and target.user() != user or group and target.group() != group:
     # None is okay here
     shutil.chown(target, user=user, group=group)
+    changed = True
+
+sys.exit(int(changed))
