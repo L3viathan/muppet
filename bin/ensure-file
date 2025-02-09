@@ -42,4 +42,5 @@ if user and target.user() != user or group and target.group() != group:
     shutil.chown(target, user=user, group=group)
     changed = True
 
-sys.exit(int(changed))
+if changed:
+    sys.exit(2)

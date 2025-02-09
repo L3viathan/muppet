@@ -61,12 +61,12 @@ try:
             p.poll()
             if line := p.stdout.read():
                 print(mclass, line.decode())
-        if p.returncode:
+        if p.returncode == 2:
             print(mclass, "changed")
+        if p.returncode not in (0, 2):
+            print("Error when applying mclass", mclass, file=sys.stderr)
+            sys.exit(1)
         # subprocess.check_call(["/bin/sh", ROOT / mclass])
         done.add(mclass)
-except CalledProcessError as e:
-    print("Error when applying mclass", mclass, file=sys.stderr)
-    sys.exit(1)
 finally:
     STATE_FILE.rmdir()
