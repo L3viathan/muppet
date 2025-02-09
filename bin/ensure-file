@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+import getopt
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+def get_hash(path):
+    output = subprocess.check_output(["shasum", str(path)]).decode()
+    # The output of shasum starts with a backslash if the filename contains
+    # either a backslash or a newline
+    hash, *_ = output.strip("\\").split()
+
+opts, (source, target) = getopt.getopt(
+    sys.argv[1:],
+    "u:g:p:",
+    ["user=", "group=", "permissions="]
+)
+
+user = group = permissions = None
+for opt, val in opts:
+    if opt in ("-u", "--user"):
+        user = val
+    elif opt in ("-g", "--group"):
+        group = val
+    elif opt in ("-p", "--permissions"):
+        permissions = val
+
+target = Path(target)
+source = Path(os.environ["MUPPET_ROOT"]) / source
+
+if not target.exists() or get_hash(target) != get_hash(source):
+    shutil.copy(source, target)
+
+if user and target.user() != user or group and target.group() != group:
+    # None is okay here
+    shutil.chown(target, user=user, group=group)
