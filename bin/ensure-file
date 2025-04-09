@@ -43,4 +43,4 @@ if user and target.user() != user or group and target.group() != group:
     changed = True
 
 if changed:
-    sys.exit(2)
+    sys.exit(1)

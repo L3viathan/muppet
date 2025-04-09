@@ -27,7 +27,7 @@ try:
     STATE_FILE.mkdir()
 except FileExistsError:
     print("Muppet run already in progress; aborting.", file=sys.stderr)
-    sys.exit(2)
+    sys.exit(1)
 
 
 def noblock(fd):
@@ -61,12 +61,11 @@ try:
             p.poll()
             if line := p.stdout.read():
                 print(mclass, line.decode())
-        if p.returncode == 2:
+        if p.returncode == 1:
             print(mclass, "changed")
-        if p.returncode not in (0, 2):
+        if p.returncode not in (0, 1):
             print("Error when applying mclass", mclass, file=sys.stderr)
             sys.exit(1)
-        # subprocess.check_call(["/bin/sh", ROOT / mclass])
         done.add(mclass)
 finally:
     STATE_FILE.rmdir()
