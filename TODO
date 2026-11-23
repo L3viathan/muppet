@@ -1,0 +1,70 @@
+Puppet, but simpler.
+
+- Unlike Puppet: No server (other than a Git remote)
+- Unlike Ansible: No manual runs
+
+A systemd service that runs every 30 minutes and:
+
+1. "Pulls" (really fetch + hard reset) a repo.
+2. Figures out the definitions that apply to it (via manually set /etc/muppet/muppetclasses)
+3. Applies changes
+
+The latter part is the hard one: I want no DSL, (almost) no magic.
+
+Definitions are shell scripts that get executed if the muppetclasses match it.
+
+Muppet also adds a bunch of little helper executables to build the declarative fundamentals, e.g.:
+
+- ensure-file some/file /at/a/place --permissions 755 --owner root
+- ensure-files some/folder /at/a/place --permissions 755 --owner root
+- ensure-folder some/file /at/a/place
+- ensure-user somename
+- ...
+
+Source files are by convention relative to the muppetclass root or something
+like that. There's also an env var pointing there so you can also use it in
+custom stuff.
+
+Generally, the ensure-... functionality should:
+
+- Run quickly when it's already the case
+- Absolutely make the thing happen, whatever that entails.
+
+Definitions _should_ be written without unnecessary executions of stuff, since
+this will run every 30 minutes or so.
+
+Open questions:
+
+What language do we write all this in?
+
+- Python?
+    - Probably always there, at least _some_ python3. But which one do we depend on...
+    - Probably best to use only stdlib, no packages, and fairly old language features...
+    - Won't be in minimal docker images etc., but the target is anyways _host_ machines.
+    - Most familiar in, will get stuff working quickly
+- Rust? Go? Nim? Zig?
+    - Advantage: Static* binary that just works. (* possible with Rust afaik, but needs to be compiled specially)
+- Shell?
+    - Which one? sh only? bash?
+    - Fairly limited functionality, simple things are hard
+
+How do we deploy/package muppet itself?
+
+- Via muppet! :D
+- Debian package?
+- Git checkout with init script or something like that?
+- How about:
+    - Script in repo to automatically SSH, copy things over, set up systemd service...
+
+
+Structure of a muppetconfig repo:
+
+/recipes
+    /nginx
+        muppetfile
+        nginx.conf
+    /page123
+        muppetfile
+        configs/
+            file1
+            file2

@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+"""
+How do we do this?
+
+Maybe:
+$ muppetize some-host repo-url
+
+Or maybe something like
+$ ssh some-host
+some-host # curl https://raw.github.com/whatever | sh
+
+Or:
+$ muppetctl init somehost somerepo
+(which then calls muppetize after cloning)
+
+Should:
+1. Git-clone the main muppet repo
+2. Set up systemd service and timer
+"""
+import subprocess
+from pathlib import Path
+
+ROOT = Path(os.environ.setdefault("MUPPET_CONFIG", "/opt/muppetconfig"))
+MUPPET_DIR = Path(os.environ.setdefault("MUPPET_DIR", "/opt/muppet"))
+ETC_DIR = Path(os.environ.setdefault("MUPPET_ETC_DIR", "/etc/muppet/"))
+STATE_FILE = Path(os.environ.setdefault("MUPPET_STATEFILE", "/var/run/muppet.lock"))
+
+if (ROOT / ".git").exists():
+    subprocess.check_call(["git", "-C", str(ROOT), "fetch"])
+    subprocess.check_call(["git", "-C", str(ROOT), "reset", "--hard", "origin/master"])
+else:
+    subprocess.check_call(["git", "clone", repo_url, str(ROOT)])
+
+ETC_DIR.mkdir(exists_ok=True)
+(ETC_DIR / "muppetclasses").touch()

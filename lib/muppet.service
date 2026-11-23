@@ -1,0 +1,13 @@
+[Unit]
+Description=Muppet
+After=syslog.target
+
+[Service]
+ExecStart=/opt/muppet/bin/muppet
+Restart=no
+Type=exec
+StandardError=syslog
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Regular muppet run
+
+[Timer]
+OnCalendar=*:0/30
+Unit=muppet.service
+
+[Install]
+WantedBy=basic.target

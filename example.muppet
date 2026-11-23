@@ -1,0 +1,5 @@
+# muppet-require: caddy
+
+ensure-git-checkout /opt/foobar https://github.com/foo/bar
+ensure-symlink ...
+ensure-file service-file /etc/systemd/system/foo.service
