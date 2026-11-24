@@ -55,7 +55,11 @@ try:
                 mclasses.extend(missing_dependencies)
                 continue
         # TODO: read output and prefix/color it?
-        p = subprocess.Popen(["/bin/sh", ROOT / mclass], stdout=PIPE)
+        p = subprocess.Popen(
+            ["/bin/sh", ROOT / mclass],
+            stdout=PIPE,
+            env={**os.environ, "MUPPET_RECIPE_ROOT": str(ROOT / mclass)},
+        )
         noblock(p.stdout)
         while p.returncode is not None:
             p.poll()

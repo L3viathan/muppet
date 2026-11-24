@@ -31,7 +31,7 @@ for opt, val in opts:
         permissions = val
 
 target = Path(target)
-source = Path(os.environ["MUPPET_ROOT"]) / source
+source = Path(os.environ["MUPPET_RECIPE_ROOT"]) / source
 
 if not target.exists() or get_hash(target) != get_hash(source):
     shutil.copy(source, target)
