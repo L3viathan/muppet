@@ -6,7 +6,6 @@ After=syslog.target
 ExecStart=/opt/muppet/bin/muppet
 Restart=no
 Type=exec
-StandardError=syslog
 User=root
 
 [Install]

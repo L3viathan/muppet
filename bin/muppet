@@ -33,6 +33,12 @@ except FileExistsError:
 def noblock(fd):
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | os.O_NONBLOCK)
 
+def green(msg):
+    return f"\x1b[32m{msg}\x1b[0m"
+
+def red(msg):
+    return f"\x1b[31m{msg}\x1b[0m"
+
 try:
     done = set()
     mclasses = (ETC_DIR / "classes").read_text().strip().split()
@@ -40,7 +46,7 @@ try:
         mclass = mclasses.pop()
         if mclass in done:
             continue
-        with (ROOT / mclass).open() as f:
+        with (ROOT / mclass / "muppetfile").open() as f:
             missing_dependencies = set()
             for line in f:
                 m = REQUIRE_PATTERN.fullmatch(line)
@@ -56,15 +62,28 @@ try:
                 continue
         # TODO: read output and prefix/color it?
         p = subprocess.Popen(
-            ["/bin/sh", ROOT / mclass],
-            stdout=PIPE,
-            env={**os.environ, "MUPPET_RECIPE_ROOT": str(ROOT / mclass)},
+            ["/bin/sh", ROOT / mclass / "muppetfile"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env={
+                **os.environ,
+                "PATH": os.pathsep.join(
+                    [
+                        *os.environ["PATH"].split(os.pathsep),
+                        str(MUPPET_DIR / "bin"),
+                    ]
+                ),
+                "MUPPET_RECIPE_ROOT": str(ROOT / mclass),
+            },
         )
         noblock(p.stdout)
-        while p.returncode is not None:
+        noblock(p.stderr)
+        while p.returncode is None:
             p.poll()
             if line := p.stdout.read():
-                print(mclass, line.decode())
+                print(mclass, green(line.decode().strip()))
+            if line := p.stderr.read():
+                print(mclass, red(line.decode().strip()))
         if p.returncode == 1:
             print(mclass, "changed")
         if p.returncode not in (0, 1):
